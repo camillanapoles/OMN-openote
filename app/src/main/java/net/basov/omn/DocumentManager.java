@@ -229,6 +229,8 @@ public class DocumentManager {
     
     /**
      * Export documents to external storage
+     * Note: This uses deprecated API (Environment.getExternalStoragePublicDirectory)
+     * TODO: Migrate to MediaStore API for Android 10+ (API 29+) and add proper permission checks
      */
     public boolean exportDocuments(List<String> sourcePaths, String exportFolderName) {
         File externalDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
@@ -366,18 +368,32 @@ public class DocumentManager {
             throw new IOException("Source file does not exist: " + source.getAbsolutePath());
         }
         
-        FileInputStream inStream = new FileInputStream(source);
-        FileOutputStream outStream = new FileOutputStream(dest);
-        FileChannel inChannel = inStream.getChannel();
-        FileChannel outChannel = outStream.getChannel();
+        FileInputStream inStream = null;
+        FileOutputStream outStream = null;
+        FileChannel inChannel = null;
+        FileChannel outChannel = null;
         
         try {
+            inStream = new FileInputStream(source);
+            outStream = new FileOutputStream(dest);
+            inChannel = inStream.getChannel();
+            outChannel = outStream.getChannel();
+            
             inChannel.transferTo(0, inChannel.size(), outChannel);
         } finally {
-            if (inChannel != null) inChannel.close();
-            if (outChannel != null) outChannel.close();
-            inStream.close();
-            outStream.close();
+            // Close resources in reverse order of opening
+            if (outChannel != null) {
+                try { outChannel.close(); } catch (IOException e) { /* ignore */ }
+            }
+            if (inChannel != null) {
+                try { inChannel.close(); } catch (IOException e) { /* ignore */ }
+            }
+            if (outStream != null) {
+                try { outStream.close(); } catch (IOException e) { /* ignore */ }
+            }
+            if (inStream != null) {
+                try { inStream.close(); } catch (IOException e) { /* ignore */ }
+            }
         }
     }
     

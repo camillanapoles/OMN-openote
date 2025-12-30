@@ -545,7 +545,12 @@ public class WebViewJSCallback {
         try {
             MainActivity mainActivity = (MainActivity) mContext;
             if (mainActivity.documentManager != null) {
-                java.util.List<String> sourcePaths = parseJsonArray(sourcePathsJson);
+                // Use org.json for proper JSON parsing
+                org.json.JSONArray jsonArray = new org.json.JSONArray(sourcePathsJson);
+                java.util.List<String> sourcePaths = new java.util.ArrayList<>();
+                for (int i = 0; i < jsonArray.length(); i++) {
+                    sourcePaths.add(jsonArray.getString(i));
+                }
                 return mainActivity.documentManager.copyDocuments(sourcePaths, destinationFolder);
             }
         } catch (Exception e) {
@@ -565,7 +570,12 @@ public class WebViewJSCallback {
         try {
             MainActivity mainActivity = (MainActivity) mContext;
             if (mainActivity.documentManager != null) {
-                java.util.List<String> sourcePaths = parseJsonArray(sourcePathsJson);
+                // Use org.json for proper JSON parsing
+                org.json.JSONArray jsonArray = new org.json.JSONArray(sourcePathsJson);
+                java.util.List<String> sourcePaths = new java.util.ArrayList<>();
+                for (int i = 0; i < jsonArray.length(); i++) {
+                    sourcePaths.add(jsonArray.getString(i));
+                }
                 return mainActivity.documentManager.moveDocuments(sourcePaths, destinationFolder);
             }
         } catch (Exception e) {
@@ -585,7 +595,12 @@ public class WebViewJSCallback {
         try {
             MainActivity mainActivity = (MainActivity) mContext;
             if (mainActivity.documentManager != null) {
-                java.util.List<String> sourcePaths = parseJsonArray(sourcePathsJson);
+                // Use org.json for proper JSON parsing
+                org.json.JSONArray jsonArray = new org.json.JSONArray(sourcePathsJson);
+                java.util.List<String> sourcePaths = new java.util.ArrayList<>();
+                for (int i = 0; i < jsonArray.length(); i++) {
+                    sourcePaths.add(jsonArray.getString(i));
+                }
                 return mainActivity.documentManager.exportDocuments(sourcePaths, exportFolderName);
             }
         } catch (Exception e) {
@@ -619,10 +634,19 @@ public class WebViewJSCallback {
     @JavascriptInterface
     public void openDocument(String path) {
         try {
+            // Validate path to prevent path traversal attacks
+            if (path == null || path.contains("..") || path.startsWith("/")) {
+                MyLog.LogE("Invalid document path: " + path);
+                return;
+            }
+            
+            // Sanitize path: remove .md extension if present
+            String sanitizedPath = path.replace(".md", "");
+            
             // Navigate to the document
             Intent i = new Intent();
             i.setAction(mContext.getPackageName() + ".OPEN_PAGE");
-            i.putExtra("name", "/" + path.replace(".md", ""));
+            i.putExtra("name", "/" + sanitizedPath);
             mContext.startActivity(i);
         } catch (Exception e) {
             MyLog.LogE(e, "Error opening document");
@@ -677,26 +701,6 @@ public class WebViewJSCallback {
         }
         json.append("}");
         return json.toString();
-    }
-    
-    private java.util.List<String> parseJsonArray(String jsonArray) {
-        java.util.List<String> result = new java.util.ArrayList<>();
-        // Simple JSON array parser for string arrays
-        String trimmed = jsonArray.trim();
-        if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
-            String content = trimmed.substring(1, trimmed.length() - 1);
-            if (!content.trim().isEmpty()) {
-                String[] parts = content.split(",");
-                for (String part : parts) {
-                    String cleaned = part.trim();
-                    if (cleaned.startsWith("\"") && cleaned.endsWith("\"")) {
-                        cleaned = cleaned.substring(1, cleaned.length() - 1);
-                    }
-                    result.add(cleaned);
-                }
-            }
-        }
-        return result;
     }
     
     private String escapeJson(String str) {
