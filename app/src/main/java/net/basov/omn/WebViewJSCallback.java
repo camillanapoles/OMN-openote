@@ -474,4 +474,237 @@ public class WebViewJSCallback {
         }
         return "";
     }
+    
+    /**
+     * Search documents by keyword
+     * @param keyword Search term
+     * @return JSON array of matching documents
+     */
+    @JavascriptInterface
+    public String searchDocuments(String keyword) {
+        try {
+            MainActivity mainActivity = (MainActivity) mContext;
+            if (mainActivity.documentManager != null) {
+                java.util.List<DocumentManager.DocumentInfo> results = 
+                    mainActivity.documentManager.searchDocuments(keyword);
+                return convertDocumentListToJson(results);
+            }
+        } catch (Exception e) {
+            MyLog.LogE(e, "Error searching documents");
+        }
+        return "[]";
+    }
+    
+    /**
+     * Get recent documents
+     * @param limit Maximum number of documents to return
+     * @return JSON array of recent documents
+     */
+    @JavascriptInterface
+    public String getRecentDocuments(int limit) {
+        try {
+            MainActivity mainActivity = (MainActivity) mContext;
+            if (mainActivity.documentManager != null) {
+                java.util.List<DocumentManager.DocumentInfo> results = 
+                    mainActivity.documentManager.getRecentDocuments(limit);
+                return convertDocumentListToJson(results);
+            }
+        } catch (Exception e) {
+            MyLog.LogE(e, "Error getting recent documents");
+        }
+        return "[]";
+    }
+    
+    /**
+     * Get documents organized by category
+     * @return JSON object with categories as keys and document arrays as values
+     */
+    @JavascriptInterface
+    public String getDocumentsByCategory() {
+        try {
+            MainActivity mainActivity = (MainActivity) mContext;
+            if (mainActivity.documentManager != null) {
+                java.util.Map<String, java.util.List<DocumentManager.DocumentInfo>> categorized = 
+                    mainActivity.documentManager.getDocumentsByCategory();
+                return convertCategorizedDocumentsToJson(categorized);
+            }
+        } catch (Exception e) {
+            MyLog.LogE(e, "Error getting documents by category");
+        }
+        return "{}";
+    }
+    
+    /**
+     * Copy multiple documents to a destination folder
+     * @param sourcePathsJson JSON array of source paths
+     * @param destinationFolder Destination folder name
+     * @return true if all documents were copied successfully
+     */
+    @JavascriptInterface
+    public boolean copyDocuments(String sourcePathsJson, String destinationFolder) {
+        try {
+            MainActivity mainActivity = (MainActivity) mContext;
+            if (mainActivity.documentManager != null) {
+                java.util.List<String> sourcePaths = parseJsonArray(sourcePathsJson);
+                return mainActivity.documentManager.copyDocuments(sourcePaths, destinationFolder);
+            }
+        } catch (Exception e) {
+            MyLog.LogE(e, "Error copying documents");
+        }
+        return false;
+    }
+    
+    /**
+     * Move multiple documents to a destination folder
+     * @param sourcePathsJson JSON array of source paths
+     * @param destinationFolder Destination folder name
+     * @return true if all documents were moved successfully
+     */
+    @JavascriptInterface
+    public boolean moveDocuments(String sourcePathsJson, String destinationFolder) {
+        try {
+            MainActivity mainActivity = (MainActivity) mContext;
+            if (mainActivity.documentManager != null) {
+                java.util.List<String> sourcePaths = parseJsonArray(sourcePathsJson);
+                return mainActivity.documentManager.moveDocuments(sourcePaths, destinationFolder);
+            }
+        } catch (Exception e) {
+            MyLog.LogE(e, "Error moving documents");
+        }
+        return false;
+    }
+    
+    /**
+     * Export multiple documents to external storage
+     * @param sourcePathsJson JSON array of source paths
+     * @param exportFolderName Export folder name
+     * @return true if all documents were exported successfully
+     */
+    @JavascriptInterface
+    public boolean exportDocuments(String sourcePathsJson, String exportFolderName) {
+        try {
+            MainActivity mainActivity = (MainActivity) mContext;
+            if (mainActivity.documentManager != null) {
+                java.util.List<String> sourcePaths = parseJsonArray(sourcePathsJson);
+                return mainActivity.documentManager.exportDocuments(sourcePaths, exportFolderName);
+            }
+        } catch (Exception e) {
+            MyLog.LogE(e, "Error exporting documents");
+        }
+        return false;
+    }
+    
+    /**
+     * Get document statistics
+     * @return JSON object with statistics
+     */
+    @JavascriptInterface
+    public String getDocumentStatistics() {
+        try {
+            MainActivity mainActivity = (MainActivity) mContext;
+            if (mainActivity.documentManager != null) {
+                java.util.Map<String, Object> stats = mainActivity.documentManager.getStatistics();
+                return convertStatisticsToJson(stats);
+            }
+        } catch (Exception e) {
+            MyLog.LogE(e, "Error getting document statistics");
+        }
+        return "{}";
+    }
+    
+    /**
+     * Open a document by path
+     * @param path Document path
+     */
+    @JavascriptInterface
+    public void openDocument(String path) {
+        try {
+            // Navigate to the document
+            Intent i = new Intent();
+            i.setAction(mContext.getPackageName() + ".OPEN_PAGE");
+            i.putExtra("name", "/" + path.replace(".md", ""));
+            mContext.startActivity(i);
+        } catch (Exception e) {
+            MyLog.LogE(e, "Error opening document");
+        }
+    }
+    
+    // Helper methods for JSON conversion
+    
+    private String convertDocumentListToJson(java.util.List<DocumentManager.DocumentInfo> documents) {
+        StringBuilder json = new StringBuilder("[");
+        for (int i = 0; i < documents.size(); i++) {
+            if (i > 0) json.append(",");
+            DocumentManager.DocumentInfo doc = documents.get(i);
+            json.append("{")
+                .append("\"path\":\"").append(escapeJson(doc.path)).append("\",")
+                .append("\"name\":\"").append(escapeJson(doc.name)).append("\",")
+                .append("\"lastModified\":").append(doc.lastModified).append(",")
+                .append("\"size\":").append(doc.size).append(",")
+                .append("\"category\":\"").append(escapeJson(doc.category)).append("\"")
+                .append("}");
+        }
+        json.append("]");
+        return json.toString();
+    }
+    
+    private String convertCategorizedDocumentsToJson(java.util.Map<String, java.util.List<DocumentManager.DocumentInfo>> categorized) {
+        StringBuilder json = new StringBuilder("{");
+        boolean first = true;
+        for (java.util.Map.Entry<String, java.util.List<DocumentManager.DocumentInfo>> entry : categorized.entrySet()) {
+            if (!first) json.append(",");
+            first = false;
+            json.append("\"").append(escapeJson(entry.getKey())).append("\":")
+                .append(convertDocumentListToJson(entry.getValue()));
+        }
+        json.append("}");
+        return json.toString();
+    }
+    
+    private String convertStatisticsToJson(java.util.Map<String, Object> stats) {
+        StringBuilder json = new StringBuilder("{");
+        boolean first = true;
+        for (java.util.Map.Entry<String, Object> entry : stats.entrySet()) {
+            if (!first) json.append(",");
+            first = false;
+            json.append("\"").append(escapeJson(entry.getKey())).append("\":");
+            Object value = entry.getValue();
+            if (value instanceof String) {
+                json.append("\"").append(escapeJson((String) value)).append("\"");
+            } else {
+                json.append(value);
+            }
+        }
+        json.append("}");
+        return json.toString();
+    }
+    
+    private java.util.List<String> parseJsonArray(String jsonArray) {
+        java.util.List<String> result = new java.util.ArrayList<>();
+        // Simple JSON array parser for string arrays
+        String trimmed = jsonArray.trim();
+        if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+            String content = trimmed.substring(1, trimmed.length() - 1);
+            if (!content.trim().isEmpty()) {
+                String[] parts = content.split(",");
+                for (String part : parts) {
+                    String cleaned = part.trim();
+                    if (cleaned.startsWith("\"") && cleaned.endsWith("\"")) {
+                        cleaned = cleaned.substring(1, cleaned.length() - 1);
+                    }
+                    result.add(cleaned);
+                }
+            }
+        }
+        return result;
+    }
+    
+    private String escapeJson(String str) {
+        if (str == null) return "";
+        return str.replace("\\", "\\\\")
+                  .replace("\"", "\\\"")
+                  .replace("\n", "\\n")
+                  .replace("\r", "\\r")
+                  .replace("\t", "\\t");
+    }
 }
