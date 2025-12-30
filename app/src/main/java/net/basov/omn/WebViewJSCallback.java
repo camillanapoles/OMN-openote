@@ -629,19 +629,31 @@ public class WebViewJSCallback {
     
     /**
      * Open a document by path
-     * @param path Document path
+     * @param path Document path (relative to notes directory)
      */
     @JavascriptInterface
     public void openDocument(String path) {
         try {
             // Validate path to prevent path traversal attacks
-            if (path == null || path.contains("..") || path.startsWith("/")) {
-                MyLog.LogE("Invalid document path: " + path);
+            if (path == null || path.trim().isEmpty()) {
+                MyLog.LogE("Empty document path");
+                return;
+            }
+            
+            // Check for path traversal patterns (including encoded versions)
+            String normalizedPath = path.replace("\\", "/");
+            if (normalizedPath.contains("..") || 
+                normalizedPath.startsWith("/") ||
+                normalizedPath.contains("%2e%2e") ||  // URL encoded ..
+                normalizedPath.contains("%252e") ||   // Double encoded .
+                normalizedPath.contains("../") ||
+                normalizedPath.contains("/..")) {
+                MyLog.LogE("Invalid document path with traversal attempt: " + path);
                 return;
             }
             
             // Sanitize path: remove .md extension if present
-            String sanitizedPath = path.replace(".md", "");
+            String sanitizedPath = normalizedPath.replace(".md", "");
             
             // Navigate to the document
             Intent i = new Intent();

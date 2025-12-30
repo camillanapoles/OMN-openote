@@ -1,6 +1,10 @@
 /**
  * DocumentManager.js - Multi-document management for Open Markdown Notes
  * Provides UI interactions for document organization, search, and batch operations
+ * 
+ * TODO: Replace prompt() dialogs with custom modal dialogs for better UX
+ *       Current implementation uses browser prompt() for simplicity and compatibility
+ *       Future versions should implement custom modal dialogs matching app design
  */
 
 var DocumentManagerUI = (function() {
