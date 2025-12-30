@@ -428,7 +428,7 @@ public class WebViewJSCallback {
             if (mainActivity.aiContextManager != null) {
                 mainActivity.aiContextManager.analyzeNoteContext(pageName, pageContent);
                 java.util.List<String> suggestions = mainActivity.aiContextManager.generateOrganizationSuggestions(pageName);
-                return android.text.TextUtils.join("\\n", suggestions);
+                return android.text.TextUtils.join("\n", suggestions);
             }
         } catch (Exception e) {
             MyLog.LogE(e, "Error getting AI suggestions");

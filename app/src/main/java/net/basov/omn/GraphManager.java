@@ -29,6 +29,8 @@ import java.util.regex.Pattern;
  */
 public class GraphManager {
     
+    private static final Pattern LINK_PATTERN = Pattern.compile("\\[([^\\]]+)\\]\\(([^)]+\\.(?:html|md))\\)");
+    
     private Context context;
     private Map<String, List<String>> noteLinks; // note -> linked notes
     private Map<String, List<String>> backlinks;  // note -> notes that link to it
@@ -53,8 +55,7 @@ public class GraphManager {
         }
         
         // Pattern for Markdown links: [text](page.html) or [text](page.md)
-        Pattern linkPattern = Pattern.compile("\\[([^\\]]+)\\]\\(([^)]+\\.(?:html|md))\\)");
-        Matcher matcher = linkPattern.matcher(noteContent);
+        Matcher matcher = LINK_PATTERN.matcher(noteContent);
         
         while (matcher.find()) {
             String linkedPage = matcher.group(2);

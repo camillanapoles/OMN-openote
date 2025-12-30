@@ -52,18 +52,27 @@ public class AIContextManager {
         Map<String, Integer> wordFrequency = new HashMap<>();
         
         for (String word : words) {
-            // Clean word and skip common words
-            word = word.replaceAll("[^a-záàâãéêíóôõúçA-ZÁÀÂÃÉÊÍÓÔÕÚÇ]", "");
+            // Clean word: keep only letters
+            StringBuilder cleanWord = new StringBuilder();
+            for (char c : word.toCharArray()) {
+                if (Character.isLetter(c)) {
+                    cleanWord.append(c);
+                }
+            }
+            word = cleanWord.toString();
+            
+            // Skip short words and common words
             if (word.length() > 3 && !isCommonWord(word)) {
                 wordFrequency.put(word, wordFrequency.getOrDefault(word, 0) + 1);
             }
         }
         
-        // Get top keywords
-        wordFrequency.entrySet().stream()
+        // Get top keywords using streams
+        contextKeywords = wordFrequency.entrySet().stream()
             .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
             .limit(10)
-            .forEach(entry -> contextKeywords.add(entry.getKey()));
+            .map(Map.Entry::getKey)
+            .collect(java.util.stream.Collectors.toList());
         
         noteContextMap.put(noteName, contextKeywords);
         return contextKeywords;
@@ -137,10 +146,26 @@ public class AIContextManager {
     }
     
     private boolean isCommonWord(String word) {
-        // Common Portuguese and English stop words
+        // Common Portuguese and English stop words (expanded list)
         String[] commonWords = {
-            "the", "and", "for", "que", "para", "com", "uma", "por", 
-            "mais", "ser", "como", "este", "esta", "seu", "sua", "dos", "das"
+            // English
+            "the", "and", "for", "are", "but", "not", "you", "all", "can", "her", "was", 
+            "one", "our", "out", "day", "get", "has", "him", "his", "how", "man", "new",
+            "now", "old", "see", "two", "way", "who", "boy", "did", "its", "let", "put",
+            "say", "she", "too", "use", "from", "have", "this", "that", "with", "they",
+            "will", "your", "what", "were", "when", "more", "then", "than", "been",
+            // Portuguese
+            "que", "para", "com", "uma", "por", "mais", "ser", "como", "este", "esta", 
+            "seu", "sua", "dos", "das", "isso", "isso", "esse", "essa", "aquele", "aquela",
+            "pelo", "pela", "pelos", "pelas", "este", "esta", "estes", "estas", "dele",
+            "dela", "deles", "delas", "nele", "nela", "neles", "nelas", "esse", "essa",
+            "esses", "essas", "aquele", "aquela", "aqueles", "aquelas", "deste", "desta",
+            "destes", "destas", "neste", "nesta", "nestes", "nestas", "desse", "dessa",
+            "desses", "dessas", "nesse", "nessa", "nesses", "nessas", "isto", "isso",
+            "aquilo", "desde", "entre", "sobre", "todos", "todas", "todo", "toda",
+            "muito", "muita", "muitos", "muitas", "pouco", "pouca", "poucos", "poucas",
+            "cada", "qual", "quais", "onde", "quando", "como", "porque", "portanto",
+            "assim", "tambem", "também", "ainda", "sempre", "nunca", "apenas", "somente"
         };
         
         for (String common : commonWords) {

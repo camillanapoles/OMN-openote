@@ -67,7 +67,7 @@ var aiGraphModule = (function() {
         html += '<div class="ai-suggestions">';
         html += '<ul>';
         
-        var suggestionLines = suggestions.split('\\n');
+        var suggestionLines = suggestions.split('\n');
         for (var i = 0; i < suggestionLines.length; i++) {
             if (suggestionLines[i].trim()) {
                 html += '<li>' + escapeHtml(suggestionLines[i]) + '</li>';
