@@ -156,15 +156,15 @@ public class AIContextManager {
             "will", "your", "what", "were", "when", "more", "then", "than", "been",
             // Portuguese
             "que", "para", "com", "uma", "por", "mais", "ser", "como", "este", "esta", 
-            "seu", "sua", "dos", "das", "isso", "isso", "esse", "essa", "aquele", "aquela",
-            "pelo", "pela", "pelos", "pelas", "este", "esta", "estes", "estas", "dele",
-            "dela", "deles", "delas", "nele", "nela", "neles", "nelas", "esse", "essa",
-            "esses", "essas", "aquele", "aquela", "aqueles", "aquelas", "deste", "desta",
+            "seu", "sua", "dos", "das", "isso", "esse", "essa", "aquele", "aquela",
+            "pelo", "pela", "pelos", "pelas", "estes", "estas", "dele",
+            "dela", "deles", "delas", "nele", "nela", "neles", "nelas",
+            "esses", "essas", "aqueles", "aquelas", "deste", "desta",
             "destes", "destas", "neste", "nesta", "nestes", "nestas", "desse", "dessa",
-            "desses", "dessas", "nesse", "nessa", "nesses", "nessas", "isto", "isso",
+            "desses", "dessas", "nesse", "nessa", "nesses", "nessas", "isto",
             "aquilo", "desde", "entre", "sobre", "todos", "todas", "todo", "toda",
             "muito", "muita", "muitos", "muitas", "pouco", "pouca", "poucos", "poucas",
-            "cada", "qual", "quais", "onde", "quando", "como", "porque", "portanto",
+            "cada", "qual", "quais", "onde", "quando", "porque", "portanto",
             "assim", "tambem", "também", "ainda", "sempre", "nunca", "apenas", "somente"
         };
         
