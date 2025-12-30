@@ -414,4 +414,64 @@ public class WebViewJSCallback {
             mContext.getApplicationContext().sendBroadcast(addIntent);
         }
     }
+    
+    /**
+     * Get AI context suggestions for the current page
+     * @param pageName Name of the current page
+     * @param pageContent Content of the page
+     * @return JSON string with AI suggestions
+     */
+    @JavascriptInterface
+    public String getAIContextSuggestions(String pageName, String pageContent) {
+        try {
+            MainActivity mainActivity = (MainActivity) mContext;
+            if (mainActivity.aiContextManager != null) {
+                mainActivity.aiContextManager.analyzeNoteContext(pageName, pageContent);
+                java.util.List<String> suggestions = mainActivity.aiContextManager.generateOrganizationSuggestions(pageName);
+                return android.text.TextUtils.join("\n", suggestions);
+            }
+        } catch (Exception e) {
+            MyLog.LogE(e, "Error getting AI suggestions");
+        }
+        return "";
+    }
+    
+    /**
+     * Get related notes based on AI context analysis
+     * @param pageName Name of the current page
+     * @return JSON array of related note names
+     */
+    @JavascriptInterface
+    public String getRelatedNotes(String pageName) {
+        try {
+            MainActivity mainActivity = (MainActivity) mContext;
+            if (mainActivity.aiContextManager != null) {
+                java.util.List<String> relatedNotes = mainActivity.aiContextManager.findRelatedNotes(pageName);
+                return android.text.TextUtils.join(",", relatedNotes);
+            }
+        } catch (Exception e) {
+            MyLog.LogE(e, "Error getting related notes");
+        }
+        return "";
+    }
+    
+    /**
+     * Get graph visualization HTML for the current page
+     * @param pageName Name of the current page
+     * @param pageContent Content of the page
+     * @return HTML string with graph visualization
+     */
+    @JavascriptInterface
+    public String getGraphVisualization(String pageName, String pageContent) {
+        try {
+            MainActivity mainActivity = (MainActivity) mContext;
+            if (mainActivity.graphManager != null) {
+                mainActivity.graphManager.extractNoteLinks(pageName, pageContent);
+                return mainActivity.graphManager.generateGraphHTML(pageName);
+            }
+        } catch (Exception e) {
+            MyLog.LogE(e, "Error getting graph visualization");
+        }
+        return "";
+    }
 }

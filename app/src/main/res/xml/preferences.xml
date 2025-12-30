@@ -104,4 +104,19 @@
             android:key="@string/pk_enable_termux_intent_uri" />
     </PreferenceCategory>
 
+    <PreferenceCategory
+        android:title="AI and Graph Features"
+        android:key="pref_ai_graph">
+        <CheckBoxPreference
+            android:title="Enable AI Context Analysis"
+            android:summary="Automatically analyze notes and suggest connections"
+            android:defaultValue="true"
+            android:key="@string/pk_enable_ai_context" />
+        <CheckBoxPreference
+            android:title="Enable Graph Visualization"
+            android:summary="Show note relationships and backlinks"
+            android:defaultValue="true"
+            android:key="@string/pk_enable_graph_view" />
+    </PreferenceCategory>
+
 </PreferenceScreen>

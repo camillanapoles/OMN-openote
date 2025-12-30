@@ -497,5 +497,7 @@ This page generated automatically.
     <string name="pk_btn_enable_shortcut" translatable="false">btnEnableShortcut</string>
     <string name="pk_btn_enable_quicknotes" translatable="false">btnEnableQuicknotes</string>
     <string name="pk_btn_enable_send" translatable="false">btnEnableSend</string>
+    <string name="pk_enable_ai_context" translatable="false">enableAIContext</string>
+    <string name="pk_enable_graph_view" translatable="false">enableGraphView</string>
 
 </resources>
