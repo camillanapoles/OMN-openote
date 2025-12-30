@@ -205,7 +205,11 @@ public class GraphManager {
         html.append("</div>\n");
         
         html.append("<script>\n");
-        html.append("var graphData = ").append(generateGraphJSON()).append(";\n");
+        html.append("var graphData = ");
+        String jsonData = generateGraphJSON();
+        // JSON is already properly escaped by JSONObject, but ensure HTML safety
+        html.append(jsonData.replace("<", "\\u003c").replace(">", "\\u003e"));
+        html.append(";\n");
         html.append("// Graph rendering code can be added here\n");
         html.append("</script>\n");
         

@@ -40,7 +40,12 @@ var aiGraphModule = (function() {
             
             var relatedNotes = Android.getRelatedNotes(currentPageName);
             if (relatedNotes && relatedNotes.length > 0) {
-                displayRelatedNotes(relatedNotes.split(','));
+                var notesList = relatedNotes.split(',').filter(function(note) {
+                    return note.trim().length > 0;
+                });
+                if (notesList.length > 0) {
+                    displayRelatedNotes(notesList);
+                }
             }
         } catch (e) {
             console.error('Error loading AI context:', e);

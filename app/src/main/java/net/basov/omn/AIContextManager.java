@@ -145,35 +145,29 @@ public class AIContextManager {
         return count;
     }
     
+    private static final java.util.Set<String> COMMON_WORDS = new java.util.HashSet<>(java.util.Arrays.asList(
+        // English
+        "the", "and", "for", "are", "but", "not", "you", "all", "can", "her", "was", 
+        "one", "our", "out", "day", "get", "has", "him", "his", "how", "man", "new",
+        "now", "old", "see", "two", "way", "who", "boy", "did", "its", "let", "put",
+        "say", "she", "too", "use", "from", "have", "this", "that", "with", "they",
+        "will", "your", "what", "were", "when", "more", "then", "than", "been",
+        // Portuguese (with and without accents for flexibility)
+        "que", "para", "com", "uma", "por", "mais", "ser", "como", "este", "esta", 
+        "seu", "sua", "dos", "das", "isso", "esse", "essa", "aquele", "aquela",
+        "pelo", "pela", "pelos", "pelas", "estes", "estas", "dele",
+        "dela", "deles", "delas", "nele", "nela", "neles", "nelas",
+        "esses", "essas", "aqueles", "aquelas", "deste", "desta",
+        "destes", "destas", "neste", "nesta", "nestes", "nestas", "desse", "dessa",
+        "desses", "dessas", "nesse", "nessa", "nesses", "nessas", "isto",
+        "aquilo", "desde", "entre", "sobre", "todos", "todas", "todo", "toda",
+        "muito", "muita", "muitos", "muitas", "pouco", "pouca", "poucos", "poucas",
+        "cada", "qual", "quais", "onde", "quando", "porque", "portanto",
+        "assim", "tambem", "também", "ainda", "sempre", "nunca", "apenas", "somente"
+    ));
+    
     private boolean isCommonWord(String word) {
-        // Common Portuguese and English stop words (expanded list)
-        String[] commonWords = {
-            // English
-            "the", "and", "for", "are", "but", "not", "you", "all", "can", "her", "was", 
-            "one", "our", "out", "day", "get", "has", "him", "his", "how", "man", "new",
-            "now", "old", "see", "two", "way", "who", "boy", "did", "its", "let", "put",
-            "say", "she", "too", "use", "from", "have", "this", "that", "with", "they",
-            "will", "your", "what", "were", "when", "more", "then", "than", "been",
-            // Portuguese
-            "que", "para", "com", "uma", "por", "mais", "ser", "como", "este", "esta", 
-            "seu", "sua", "dos", "das", "isso", "esse", "essa", "aquele", "aquela",
-            "pelo", "pela", "pelos", "pelas", "estes", "estas", "dele",
-            "dela", "deles", "delas", "nele", "nela", "neles", "nelas",
-            "esses", "essas", "aqueles", "aquelas", "deste", "desta",
-            "destes", "destas", "neste", "nesta", "nestes", "nestas", "desse", "dessa",
-            "desses", "dessas", "nesse", "nessa", "nesses", "nessas", "isto",
-            "aquilo", "desde", "entre", "sobre", "todos", "todas", "todo", "toda",
-            "muito", "muita", "muitos", "muitas", "pouco", "pouca", "poucos", "poucas",
-            "cada", "qual", "quais", "onde", "quando", "porque", "portanto",
-            "assim", "tambem", "também", "ainda", "sempre", "nunca", "apenas", "somente"
-        };
-        
-        for (String common : commonWords) {
-            if (word.equals(common)) {
-                return true;
-            }
-        }
-        return false;
+        return COMMON_WORDS.contains(word);
     }
     
     /**
