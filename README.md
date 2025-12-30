@@ -1,6 +1,29 @@
+# Open Markdown Notes
+
+[🇧🇷 Leia em Português](README_PT.md)
 
 <a href="https://play.google.com/store/apps/details?id=net.basov.omn.b"><img src="https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png" height="80" alt="Available on Google Play" /></a>
 <a href="https://f-droid.org/en/packages/net.basov.omn.fdroid/"><img src="https://f-droid.org/badge/get-it-on.png" height="80" alt="Available on F-Droid" /></a>
+
+## What's New in Version 35
+
+### 🤖 AI-Powered Context Engineering
+- **Context Analysis**: Automatic keyword extraction and context understanding
+- **Smart Suggestions**: AI-based recommendations for note organization
+- **Auto Summarization**: Generate summaries using AI techniques
+- **Related Notes Discovery**: Automatically find connections between notes
+
+### 📊 Graph Functionality
+- **Graph Visualization**: See connections between your notes
+- **Backlinks & Forward Links**: Track note relationships
+- **Visual Navigation**: Navigate through your knowledge graph
+- **Relationship Analysis**: Understand your knowledge structure
+
+### 🎯 Enhanced for Android 15/16
+- Updated to API 35 with full Android 15/16 support
+- Modern permissions handling
+- Complete Portuguese translation (Tradução completa em Português)
+- Improved usability and performance
 
 ### General information.
 This is simple, lightweight and open source application to create and organize everyday notes. Notes stored in Markdown format and shown as html. New html page create if it does not exists or corresponding markdown page has later modification time stamp.
