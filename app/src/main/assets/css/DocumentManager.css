@@ -1,0 +1,309 @@
+/**
+ * DocumentManager.css - Styling for multi-document management interface
+ */
+
+/* Document Manager Container */
+.document-manager {
+    padding: 16px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Search and Filter Section */
+.doc-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+#doc-search {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+#doc-search:focus {
+    border-color: #2196F3;
+}
+
+#category-filter {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    outline: none;
+    background-color: white;
+    cursor: pointer;
+}
+
+/* Batch Operations Bar */
+.batch-operations {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    padding: 12px;
+    background-color: #f5f5f5;
+    border-radius: 8px;
+    flex-wrap: wrap;
+}
+
+.batch-operation-btn {
+    padding: 10px 16px;
+    font-size: 14px;
+    border: none;
+    border-radius: 6px;
+    background-color: #2196F3;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-weight: 500;
+}
+
+.batch-operation-btn:hover:not(:disabled) {
+    background-color: #1976D2;
+}
+
+.batch-operation-btn:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.batch-operation-btn.danger {
+    background-color: #f44336;
+}
+
+.batch-operation-btn.danger:hover:not(:disabled) {
+    background-color: #d32f2f;
+}
+
+/* Document List */
+.document-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.document-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.document-item:hover {
+    background-color: #f5f5f5;
+    border-color: #2196F3;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.document-item.selected {
+    background-color: #e3f2fd;
+    border-color: #2196F3;
+}
+
+.doc-checkbox {
+    margin-right: 12px;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.doc-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.doc-name {
+    font-size: 16px;
+    font-weight: 500;
+    color: #212121;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.doc-name:hover {
+    color: #2196F3;
+}
+
+.doc-meta {
+    font-size: 13px;
+    color: #757575;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.doc-category {
+    display: inline-block;
+    padding: 2px 8px;
+    background-color: #e3f2fd;
+    color: #1976D2;
+    border-radius: 4px;
+    font-size: 12px;
+    margin-left: 8px;
+}
+
+/* No Results Message */
+.no-results {
+    text-align: center;
+    padding: 40px 20px;
+    color: #757575;
+    font-size: 16px;
+}
+
+/* Statistics Section */
+#doc-statistics {
+    margin-top: 24px;
+    padding: 16px;
+    background-color: #f5f5f5;
+    border-radius: 8px;
+}
+
+#doc-statistics h3 {
+    margin-top: 0;
+    margin-bottom: 16px;
+    color: #212121;
+    font-size: 18px;
+}
+
+.stat-item {
+    padding: 8px 0;
+    border-bottom: 1px solid #e0e0e0;
+    color: #424242;
+    font-size: 14px;
+}
+
+.stat-item:last-child {
+    border-bottom: none;
+}
+
+/* Section Headers */
+.section-header {
+    font-size: 20px;
+    font-weight: 600;
+    color: #212121;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #2196F3;
+}
+
+/* Responsive Design */
+@media (min-width: 768px) {
+    .doc-controls {
+        flex-direction: row;
+        align-items: center;
+    }
+    
+    #doc-search {
+        flex: 2;
+    }
+    
+    #category-filter {
+        flex: 1;
+    }
+    
+    .batch-operations {
+        justify-content: flex-start;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .document-manager {
+        background-color: #121212;
+        color: #e0e0e0;
+    }
+    
+    #doc-search,
+    #category-filter {
+        background-color: #1e1e1e;
+        border-color: #333333;
+        color: #e0e0e0;
+    }
+    
+    .batch-operations {
+        background-color: #1e1e1e;
+    }
+    
+    .document-item {
+        background-color: #1e1e1e;
+        border-color: #333333;
+        color: #e0e0e0;
+    }
+    
+    .document-item:hover {
+        background-color: #2a2a2a;
+    }
+    
+    .document-item.selected {
+        background-color: #1a237e;
+        border-color: #2196F3;
+    }
+    
+    .doc-name {
+        color: #e0e0e0;
+    }
+    
+    .doc-meta {
+        color: #9e9e9e;
+    }
+    
+    .doc-category {
+        background-color: #1a237e;
+        color: #90caf9;
+    }
+    
+    #doc-statistics {
+        background-color: #1e1e1e;
+    }
+    
+    #doc-statistics h3 {
+        color: #e0e0e0;
+    }
+    
+    .stat-item {
+        border-color: #333333;
+        color: #9e9e9e;
+    }
+    
+    .section-header {
+        color: #e0e0e0;
+    }
+}
+
+/* Loading State */
+.loading {
+    text-align: center;
+    padding: 40px;
+    color: #757575;
+}
+
+.loading::after {
+    content: '...';
+    animation: dots 1.5s steps(4, end) infinite;
+}
+
+@keyframes dots {
+    0%, 20% {
+        content: '.';
+    }
+    40% {
+        content: '..';
+    }
+    60%, 100% {
+        content: '...';
+    }
+}
