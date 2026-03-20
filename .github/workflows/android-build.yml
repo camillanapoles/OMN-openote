@@ -31,29 +31,56 @@ jobs:
         node-version: '18'
     
     - name: Install Mustache CLI
-      run: sudo npm install -g mustache
+      run: npm install -g mustache
     
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     
-    - name: Initialize submodules
+    - name: Initialize submodules (fallback)
       run: |
-        if [ -d "app/highlight.js" ]; then
-          echo "highlight.js submodule exists"
-        else
+        if [ ! -d "app/highlight.js/.git" ]; then
           echo "Cloning highlight.js..."
-          cd app
-          git clone https://github.com/highlightjs/highlight.js.git
-          cd ..
-        fi
-        if [ -d "app/marked" ]; then
-          echo "marked submodule exists"
+          git clone https://github.com/highlightjs/highlight.js.git app/highlight.js
         else
-          echo "Cloning marked..."
-          cd app
-          git clone https://github.com/markedjs/marked.git
-          cd ..
+          echo "highlight.js submodule exists"
         fi
+        if [ ! -d "app/marked/.git" ]; then
+          echo "Cloning marked..."
+          git clone https://github.com/markedjs/marked.git app/marked
+        else
+          echo "marked submodule exists"
+        fi
+    
+    - name: Build JS assets
+      run: |
+        cd app
+        # Build highlight.js
+        if [ ! -f "src/main/assets/js/highlight.pack.js" ]; then
+          cd highlight.js
+          npm install
+          node tools/build.js :common
+          cp build/highlight.pack.js ../src/main/assets/js/highlight.pack.js
+          cp src/styles/github.css ../src/main/assets/css/highlight.css
+          cd ..
+          echo "highlight.js built"
+        else
+          echo "highlight.pack.js already exists, skipping"
+        fi
+        # Build marked.js
+        if [ ! -f "src/main/assets/js/marked.min.js" ]; then
+          cd marked
+          npm run build 2>/dev/null || make 2>/dev/null || true
+          if [ -f "marked.min.js" ]; then
+            cp marked.min.js ../src/main/assets/js/marked.min.js
+          elif [ -f "lib/marked.min.js" ]; then
+            cp lib/marked.min.js ../src/main/assets/js/marked.min.js
+          fi
+          cd ..
+          echo "marked.js built"
+        else
+          echo "marked.min.js already exists, skipping"
+        fi
+      continue-on-error: true
     
     - name: Create keystore files for signing
       run: |
@@ -65,16 +92,16 @@ jobs:
           -dname "CN=Android Debug,O=Android,C=US"
         
         # Create gradle.properties with debug signing config
-        cat > gradle.properties << EOF
-        MY_DEBUG_KEYSTORE_FILE=$HOME/.android/debug.keystore
-        MY_DEBUG_KEYSTORE_PASSWORD=android
-        MY_DEBUG_KEY_ALIAS=androiddebugkey
-        MY_DEBUG_KEY_PASSWORD=android
-        MY_RELEASE_KEYSTORE_FILE=$HOME/.android/debug.keystore
-        MY_RELEASE_KEYSTORE_PASSWORD=android
-        MY_RELEASE_KEY_ALIAS=androiddebugkey
-        MY_RELEASE_KEY_PASSWORD=android
-        EOF
+        cat > gradle.properties <<EOF
+MY_DEBUG_KEYSTORE_FILE=$HOME/.android/debug.keystore
+MY_DEBUG_KEYSTORE_PASSWORD=android
+MY_DEBUG_KEY_ALIAS=androiddebugkey
+MY_DEBUG_KEY_PASSWORD=android
+MY_RELEASE_KEYSTORE_FILE=$HOME/.android/debug.keystore
+MY_RELEASE_KEYSTORE_PASSWORD=android
+MY_RELEASE_KEY_ALIAS=androiddebugkey
+MY_RELEASE_KEY_PASSWORD=android
+EOF
     
     - name: Build Debug APK
       run: ./gradlew assembleDebug --stacktrace
@@ -98,14 +125,14 @@ jobs:
         COMMIT_SHA="${{ steps.version.outputs.commit_sha }}"
         
         # Find and copy debug APK
-        DEBUG_APK=$(find app/build/outputs/apk/debug -name "*.apk" | head -1)
+        DEBUG_APK=$(find app/build/outputs/apk/debug -name "*.apk" 2>/dev/null | head -1)
         if [ -f "$DEBUG_APK" ]; then
           cp "$DEBUG_APK" "apk-output/OpenMarkdownNotes-${VERSION_NAME}-debug-${COMMIT_SHA}.apk"
           echo "Debug APK: OpenMarkdownNotes-${VERSION_NAME}-debug-${COMMIT_SHA}.apk"
         fi
         
         # Find and copy beta APK
-        BETA_APK=$(find app/build/outputs/apk/beta -name "*.apk" | head -1)
+        BETA_APK=$(find app/build/outputs/apk/beta -name "*.apk" 2>/dev/null | head -1)
         if [ -f "$BETA_APK" ]; then
           cp "$BETA_APK" "apk-output/OpenMarkdownNotes-${VERSION_NAME}-beta-${COMMIT_SHA}.apk"
           echo "Beta APK: OpenMarkdownNotes-${VERSION_NAME}-beta-${COMMIT_SHA}.apk"
