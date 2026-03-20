@@ -92,16 +92,16 @@ jobs:
           -dname "CN=Android Debug,O=Android,C=US"
         
         # Create gradle.properties with debug signing config
-        cat > gradle.properties <<EOF
-MY_DEBUG_KEYSTORE_FILE=$HOME/.android/debug.keystore
-MY_DEBUG_KEYSTORE_PASSWORD=android
-MY_DEBUG_KEY_ALIAS=androiddebugkey
-MY_DEBUG_KEY_PASSWORD=android
-MY_RELEASE_KEYSTORE_FILE=$HOME/.android/debug.keystore
-MY_RELEASE_KEYSTORE_PASSWORD=android
-MY_RELEASE_KEY_ALIAS=androiddebugkey
-MY_RELEASE_KEY_PASSWORD=android
-EOF
+        {
+          echo "MY_DEBUG_KEYSTORE_FILE=$HOME/.android/debug.keystore"
+          echo "MY_DEBUG_KEYSTORE_PASSWORD=android"
+          echo "MY_DEBUG_KEY_ALIAS=androiddebugkey"
+          echo "MY_DEBUG_KEY_PASSWORD=android"
+          echo "MY_RELEASE_KEYSTORE_FILE=$HOME/.android/debug.keystore"
+          echo "MY_RELEASE_KEYSTORE_PASSWORD=android"
+          echo "MY_RELEASE_KEY_ALIAS=androiddebugkey"
+          echo "MY_RELEASE_KEY_PASSWORD=android"
+        } > gradle.properties
     
     - name: Build Debug APK
       run: ./gradlew assembleDebug --stacktrace
