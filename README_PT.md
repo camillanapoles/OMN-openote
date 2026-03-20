@@ -30,6 +30,25 @@ Eu projetei esta aplicação para minhas necessidades e a uso todos os dias. Fic
 - **Navegação em Grafo**: Navegue facilmente entre notas relacionadas
 - **Análise de Relacionamentos**: Entenda a estrutura do seu conhecimento
 
+### 📁 Gestão Avançada de Multi-Documentos
+
+- **Busca Avançada**: Pesquise em todos os documentos por nome e conteúdo
+- **Organização por Categorias**: Filtre e organize documentos por pastas/categorias
+- **Operações em Lote**: Copie, mova ou exporte múltiplos documentos de uma vez
+- **Estatísticas de Documentos**: Visualize estatísticas completas sobre sua biblioteca
+- **Gestão de Tags**: Organize documentos com tags personalizadas
+- **Suporte a Templates**: Crie novos documentos a partir de modelos
+- **Documentos Recentes**: Acesso rápido aos documentos modificados recentemente
+
+### 🚀 CI/CD Automatizado e Deployment
+
+- **Workflows GitHub Actions**: Pipeline automatizado de build e testes
+- **Builds APK Versionados**: Geração automática de arquivos APK com números de versão
+- **Múltiplas Variantes**: Builds Debug, Beta e General
+- **Testes Automatizados**: Testes contínuos em cada commit
+- **GitHub Releases**: Criação automática de releases com APKs para download
+- **Artefatos de Build**: APKs armazenados por 30-90 dias para testes
+
 ### 🎯 Melhorias de Usabilidade
 
 - **Suporte ao Android 15/16**: Atualizado para API 35 com suporte total
@@ -87,6 +106,39 @@ A aplicação solicita as seguintes permissões:
 - Código aberto e auditável
 
 ## Construção e Desenvolvimento
+
+### CI/CD e Builds Automatizados
+
+Este projeto agora inclui workflows automatizados de CI/CD usando GitHub Actions:
+
+#### Workflow de Build Automatizado (`.github/workflows/android-build.yml`)
+- **Gatilhos**: Executa automaticamente em push para branches principais e pull requests
+- **Variantes de Build**: Gera arquivos APK Debug e Beta
+- **Testes**: Executa testes unitários automaticamente
+- **Artefatos**: Armazena arquivos APK por 30 dias
+- **Rastreamento de Versão**: APKs incluem número de versão e SHA do commit
+
+#### Workflow de Release (`.github/workflows/release.yml`)
+- **Gatilhos**: Executa quando uma tag de versão é enviada (ex: `v0.35.0`) ou manualmente
+- **Variantes de Build**: Gera APKs Debug, Beta e General
+- **GitHub Releases**: Cria automaticamente releases com APKs para download
+- **Retenção**: Artefatos de release armazenados por 90 dias
+
+#### Como Usar CI/CD:
+
+1. **Builds automáticos em cada push**: Faça push do seu código e o GitHub Actions fará o build automaticamente
+2. **Criar um release**: 
+   ```bash
+   git tag v0.35.1
+   git push origin v0.35.1
+   ```
+3. **Release manual**: Vá para aba Actions → Workflow Release → Run workflow
+4. **Baixar APKs**: Vá para aba Actions → Selecione o workflow run → Baixe os artefatos
+
+#### Convenção de Nomenclatura de APK:
+- Debug: `OpenMarkdownNotes-{version}-debug-{commit}.apk`
+- Beta: `OpenMarkdownNotes-{version}-beta-{commit}.apk`
+- General: `OpenMarkdownNotes-{version}-general-{commit}.apk`
 
 ### Dependências
 

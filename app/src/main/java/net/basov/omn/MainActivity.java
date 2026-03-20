@@ -77,6 +77,7 @@ public class MainActivity extends Activity {
     // AI and Graph functionality (public for JavaScript callbacks)
     public AIContextManager aiContextManager;
     public GraphManager graphManager;
+    public DocumentManager documentManager;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -211,6 +212,10 @@ public class MainActivity extends Activity {
         // Initialize AI and Graph managers
         aiContextManager = new AIContextManager(this);
         graphManager = new GraphManager(this);
+        
+        // Initialize DocumentManager for multi-document operations
+        File notesDir = new File(FileIO.getFilesDir(this), "md");
+        documentManager = new DocumentManager(this, notesDir);
 
         //Add pined shortcut for Android 8.0 and later
         if(Build.VERSION.SDK_INT >= 25) {

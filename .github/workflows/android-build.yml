@@ -1,0 +1,142 @@
+name: Android CI Build
+
+on:
+  push:
+    branches: [ main, master, develop, copilot/** ]
+  pull_request:
+    branches: [ main, master, develop ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        submodules: 'recursive'
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: gradle
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+    
+    - name: Install Mustache CLI
+      run: sudo npm install -g mustache
+    
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+    
+    - name: Initialize submodules
+      run: |
+        if [ -d "app/highlight.js" ]; then
+          echo "highlight.js submodule exists"
+        else
+          echo "Cloning highlight.js..."
+          cd app
+          git clone https://github.com/highlightjs/highlight.js.git
+          cd ..
+        fi
+        if [ -d "app/marked" ]; then
+          echo "marked submodule exists"
+        else
+          echo "Cloning marked..."
+          cd app
+          git clone https://github.com/markedjs/marked.git
+          cd ..
+        fi
+    
+    - name: Create keystore files for signing
+      run: |
+        mkdir -p ~/.android
+        # Create a debug keystore for CI builds
+        keytool -genkey -v -keystore ~/.android/debug.keystore \
+          -storepass android -alias androiddebugkey -keypass android \
+          -keyalg RSA -keysize 2048 -validity 10000 \
+          -dname "CN=Android Debug,O=Android,C=US"
+        
+        # Create gradle.properties with debug signing config
+        cat > gradle.properties << EOF
+        MY_DEBUG_KEYSTORE_FILE=$HOME/.android/debug.keystore
+        MY_DEBUG_KEYSTORE_PASSWORD=android
+        MY_DEBUG_KEY_ALIAS=androiddebugkey
+        MY_DEBUG_KEY_PASSWORD=android
+        MY_RELEASE_KEYSTORE_FILE=$HOME/.android/debug.keystore
+        MY_RELEASE_KEYSTORE_PASSWORD=android
+        MY_RELEASE_KEY_ALIAS=androiddebugkey
+        MY_RELEASE_KEY_PASSWORD=android
+        EOF
+    
+    - name: Build Debug APK
+      run: ./gradlew assembleDebug --stacktrace
+    
+    - name: Build Beta APK
+      run: ./gradlew assembleBeta --stacktrace
+    
+    - name: Get version information
+      id: version
+      run: |
+        VERSION_NAME=$(grep "versionName" app/build.gradle | head -1 | awk '{print $2}' | tr -d '"')
+        COMMIT_SHA=$(git rev-parse --short HEAD)
+        echo "version_name=${VERSION_NAME}" >> $GITHUB_OUTPUT
+        echo "commit_sha=${COMMIT_SHA}" >> $GITHUB_OUTPUT
+        echo "apk_name=OpenMarkdownNotes-${VERSION_NAME}-${COMMIT_SHA}" >> $GITHUB_OUTPUT
+    
+    - name: Rename APK files with version
+      run: |
+        mkdir -p apk-output
+        VERSION_NAME="${{ steps.version.outputs.version_name }}"
+        COMMIT_SHA="${{ steps.version.outputs.commit_sha }}"
+        
+        # Find and copy debug APK
+        DEBUG_APK=$(find app/build/outputs/apk/debug -name "*.apk" | head -1)
+        if [ -f "$DEBUG_APK" ]; then
+          cp "$DEBUG_APK" "apk-output/OpenMarkdownNotes-${VERSION_NAME}-debug-${COMMIT_SHA}.apk"
+          echo "Debug APK: OpenMarkdownNotes-${VERSION_NAME}-debug-${COMMIT_SHA}.apk"
+        fi
+        
+        # Find and copy beta APK
+        BETA_APK=$(find app/build/outputs/apk/beta -name "*.apk" | head -1)
+        if [ -f "$BETA_APK" ]; then
+          cp "$BETA_APK" "apk-output/OpenMarkdownNotes-${VERSION_NAME}-beta-${COMMIT_SHA}.apk"
+          echo "Beta APK: OpenMarkdownNotes-${VERSION_NAME}-beta-${COMMIT_SHA}.apk"
+        fi
+        
+        ls -lh apk-output/
+    
+    - name: Upload Debug APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: debug-apk-${{ steps.version.outputs.commit_sha }}
+        path: apk-output/*-debug-*.apk
+        if-no-files-found: error
+        retention-days: 30
+    
+    - name: Upload Beta APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: beta-apk-${{ steps.version.outputs.commit_sha }}
+        path: apk-output/*-beta-*.apk
+        if-no-files-found: error
+        retention-days: 30
+    
+    - name: Run unit tests
+      run: ./gradlew test --stacktrace
+      continue-on-error: true
+    
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results
+        path: app/build/test-results/
+        retention-days: 7

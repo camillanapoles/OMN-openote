@@ -1,0 +1,180 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 0.35.0)'
+        required: true
+        default: '0.35.0'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        submodules: 'recursive'
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: gradle
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+    
+    - name: Install Mustache CLI
+      run: sudo npm install -g mustache
+    
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+    
+    - name: Initialize submodules
+      run: |
+        if [ -d "app/highlight.js" ]; then
+          echo "highlight.js submodule exists"
+        else
+          echo "Cloning highlight.js..."
+          cd app
+          git clone https://github.com/highlightjs/highlight.js.git
+          cd ..
+        fi
+        if [ -d "app/marked" ]; then
+          echo "marked submodule exists"
+        else
+          echo "Cloning marked..."
+          cd app
+          git clone https://github.com/markedjs/marked.git
+          cd ..
+        fi
+    
+    - name: Create keystore files for signing
+      run: |
+        mkdir -p ~/.android
+        # Create a debug keystore for CI builds
+        keytool -genkey -v -keystore ~/.android/debug.keystore \
+          -storepass android -alias androiddebugkey -keypass android \
+          -keyalg RSA -keysize 2048 -validity 10000 \
+          -dname "CN=Android Debug,O=Android,C=US"
+        
+        # Create gradle.properties with debug signing config
+        cat > gradle.properties << EOF
+        MY_DEBUG_KEYSTORE_FILE=$HOME/.android/debug.keystore
+        MY_DEBUG_KEYSTORE_PASSWORD=android
+        MY_DEBUG_KEY_ALIAS=androiddebugkey
+        MY_DEBUG_KEY_PASSWORD=android
+        MY_RELEASE_KEYSTORE_FILE=$HOME/.android/debug.keystore
+        MY_RELEASE_KEYSTORE_PASSWORD=android
+        MY_RELEASE_KEY_ALIAS=androiddebugkey
+        MY_RELEASE_KEY_PASSWORD=android
+        EOF
+    
+    - name: Build Release APKs
+      run: |
+        ./gradlew assembleDebug assembleBeta assembleGeneral --stacktrace
+    
+    - name: Get version information
+      id: version
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          VERSION_NAME="${{ github.event.inputs.version }}"
+        else
+          VERSION_NAME=${GITHUB_REF#refs/tags/v}
+        fi
+        COMMIT_SHA=$(git rev-parse --short HEAD)
+        echo "version_name=${VERSION_NAME}" >> $GITHUB_OUTPUT
+        echo "commit_sha=${COMMIT_SHA}" >> $GITHUB_OUTPUT
+    
+    - name: Prepare release artifacts
+      id: artifacts
+      run: |
+        mkdir -p release-artifacts
+        VERSION_NAME="${{ steps.version.outputs.version_name }}"
+        COMMIT_SHA="${{ steps.version.outputs.commit_sha }}"
+        
+        # Find and copy all APK variants
+        find app/build/outputs/apk -name "*.apk" -type f | while read apk; do
+          variant=$(echo $apk | grep -oP '(debug|beta|general)' | head -1)
+          cp "$apk" "release-artifacts/OpenMarkdownNotes-${VERSION_NAME}-${variant}-${COMMIT_SHA}.apk"
+          echo "Copied: OpenMarkdownNotes-${VERSION_NAME}-${variant}-${COMMIT_SHA}.apk"
+        done
+        
+        ls -lh release-artifacts/
+    
+    - name: Create Release Notes
+      id: release_notes
+      run: |
+        cat > release-notes.md << 'EOF'
+        ## Open Markdown Notes - Version ${{ steps.version.outputs.version_name }}
+        
+        ### 📦 Installation Files
+        
+        This release includes multiple APK variants for testing:
+        
+        - **Debug APK**: For development and testing (includes debug symbols)
+        - **Beta APK**: Beta testing version with debug signing
+        - **General APK**: General release candidate
+        
+        ### 🚀 What's Included
+        
+        - Multi-document markdown management
+        - AI-powered context analysis
+        - Graph visualization for note connections
+        - Full Portuguese translation
+        - Android 15/16 support (API 35)
+        
+        ### 📱 Installation Instructions
+        
+        1. Download the appropriate APK file for your needs
+        2. Enable "Install from unknown sources" on your Android device
+        3. Open the downloaded APK file to install
+        4. Grant necessary permissions when prompted
+        
+        ### ⚠️ Note
+        
+        These are test builds signed with debug keys. For production use, download from:
+        - [Google Play Store](https://play.google.com/store/apps/details?id=net.basov.omn.b)
+        - [F-Droid](https://f-droid.org/en/packages/net.basov.omn.fdroid/)
+        
+        ### 📝 Changelog
+        
+        - Enhanced multi-document management capabilities
+        - Automated build and deployment system
+        - Improved CI/CD pipeline
+        - Version tracking in APK filenames
+        
+        **Build SHA**: ${{ steps.version.outputs.commit_sha }}
+        EOF
+        
+        cat release-notes.md
+    
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ github.ref_name || format('v{0}', steps.version.outputs.version_name) }}
+        name: Release ${{ steps.version.outputs.version_name }}
+        body_path: release-notes.md
+        draft: false
+        prerelease: true
+        files: |
+          release-artifacts/*.apk
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Upload Release APKs
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-apks-${{ steps.version.outputs.version_name }}
+        path: release-artifacts/*.apk
+        retention-days: 90

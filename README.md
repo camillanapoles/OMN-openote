@@ -19,6 +19,23 @@
 - **Visual Navigation**: Navigate through your knowledge graph
 - **Relationship Analysis**: Understand your knowledge structure
 
+### 📁 Enhanced Multi-Document Management
+- **Advanced Search**: Search across all documents by name and content
+- **Category Organization**: Filter and organize documents by folders/categories
+- **Batch Operations**: Copy, move, or export multiple documents at once
+- **Document Statistics**: View comprehensive statistics about your document library
+- **Tag Management**: Organize documents with custom tags
+- **Template Support**: Create new documents from templates
+- **Recent Documents**: Quick access to recently modified documents
+
+### 🚀 Automated CI/CD and Deployment
+- **GitHub Actions Workflows**: Automated build and test pipeline
+- **Versioned APK Builds**: Automatic generation of APK files with version numbers
+- **Multiple Build Variants**: Debug, Beta, and General release builds
+- **Automated Testing**: Continuous testing on every commit
+- **GitHub Releases**: Automatic release creation with downloadable APKs
+- **Build Artifacts**: APK files stored for 30-90 days for testing
+
 ### 🎯 Enhanced for Android 15/16
 - Updated to API 35 with full Android 15/16 support
 - Modern permissions handling
@@ -102,6 +119,39 @@ Mentioned source code license and coperight:
 ### Build instructions
 
 I use several code components from another open source projects. You nee to obtain their before building.
+
+#### CI/CD and Automated Builds
+
+This project now includes automated CI/CD workflows using GitHub Actions:
+
+##### Automated Build Workflow (`.github/workflows/android-build.yml`)
+- **Triggers**: Automatically runs on push to main branches and pull requests
+- **Build Variants**: Generates Debug and Beta APK files
+- **Testing**: Runs unit tests automatically
+- **Artifacts**: Stores APK files for 30 days
+- **Version Tracking**: APK files include version number and commit SHA
+
+##### Release Workflow (`.github/workflows/release.yml`)
+- **Triggers**: Runs when a version tag is pushed (e.g., `v0.35.0`) or manually
+- **Build Variants**: Generates Debug, Beta, and General APK files
+- **GitHub Releases**: Automatically creates releases with APK downloads
+- **Retention**: Release artifacts stored for 90 days
+
+##### To Use CI/CD:
+
+1. **Automatic builds on every push**: Push your code and GitHub Actions will build it automatically
+2. **Create a release**: 
+   ```bash
+   git tag v0.35.1
+   git push origin v0.35.1
+   ```
+3. **Manual release**: Go to Actions tab → Release workflow → Run workflow
+4. **Download APKs**: Go to Actions tab → Select workflow run → Download artifacts
+
+##### APK Naming Convention:
+- Debug: `OpenMarkdownNotes-{version}-debug-{commit}.apk`
+- Beta: `OpenMarkdownNotes-{version}-beta-{commit}.apk`
+- General: `OpenMarkdownNotes-{version}-general-{commit}.apk`
 
 #### Mustache JavaScript (node)
 I use mustache JavaScript based engine to produse text resources from templates for different application modes (ordinary and legacy)
