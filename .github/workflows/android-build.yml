@@ -38,13 +38,13 @@ jobs:
     
     - name: Initialize submodules (fallback)
       run: |
-        if [ ! -d "app/highlight.js/.git" ]; then
+        if [ ! -e "app/highlight.js/.git" ]; then
           echo "Cloning highlight.js..."
           git clone https://github.com/highlightjs/highlight.js.git app/highlight.js
         else
           echo "highlight.js submodule exists"
         fi
-        if [ ! -d "app/marked/.git" ]; then
+        if [ ! -e "app/marked/.git" ]; then
           echo "Cloning marked..."
           git clone https://github.com/markedjs/marked.git app/marked
         else
