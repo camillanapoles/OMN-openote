@@ -8,7 +8,8 @@ android {
     namespace "net.basov.omn"
 
     def last_tag = getGitRevParseInfo("describe --tags --abbrev=0")
-    def commit_count = getGitRevParseInfo("rev-list --count ${last_tag}..")
+    // When no tags exist, last_tag is "0" (fallback sentinel); count all commits from HEAD
+    def commit_count = last_tag == "0" ? getGitRevParseInfo("rev-list --count") : getGitRevParseInfo("rev-list --count ${last_tag}..")
     def current_commit = getGitRevParseInfo("rev-parse --short")
 
     applicationVariants.all { variant ->
@@ -86,81 +87,75 @@ android {
     }
 }
 
-task makeHighlightJS(type: Exec) {
+task makeHighlightJS {
     inputs.file file("highlight.js/src/highlight.js")
     outputs.file file("src/main/assets/js/highlight.pack.js")
-    buildHighlightJS()
+    doLast {
+        exec {
+            workingDir 'highlight.js'
+            commandLine "npm", "install"
+        }
+        exec {
+            workingDir 'highlight.js'
+            commandLine "node", "tools/build.js", ":common"
+        }
+        exec {
+            workingDir 'highlight.js'
+            commandLine "cp", "build/highlight.pack.js", "../src/main/assets/js/highlight.pack.js"
+        }
+        exec {
+            workingDir 'highlight.js'
+            commandLine "cp", "src/styles/github.css", "../src/main/assets/css/highlight.css"
+        }
+        println "*-*-* highlight.js generated *-*-*"
+    }
 }
 
-void buildHighlightJS() {
-    exec {
-        workingDir 'highlight.js'
-        commandLine "npm", "install"
-    }
-    exec {
-        workingDir 'highlight.js'
-        commandLine "nodejs", "tools/build.js", ":common"
-    }
-    exec {
-        workingDir 'highlight.js'
-        commandLine "cp", "build/highlight.pack.js", "../src/main/assets/js/highlight.pack.js"
-    }
-    exec {
-        workingDir 'highlight.js'
-        commandLine "cp", "src/styles/github.css", "../src/main/assets/css/highlight.css"
-    }
-    println "*-*-* highlight.js generated *-*-*"
-}
-
-task makeMarkedJS(type: Exec) {
+task makeMarkedJS {
     inputs.file file("marked/lib/marked.js")
     outputs.file file("src/main/assets/js/marked.min.js")
-    buildMarkedJS()
-}
-void buildMarkedJS() {
-    exec {
-        workingDir 'marked'
-        commandLine "make"
+    doLast {
+        exec {
+            workingDir 'marked'
+            commandLine "make"
+        }
+        exec {
+            workingDir 'marked'
+            commandLine "cp", "marked.min.js", "../src/main/assets/js/marked.min.js"
+        }
+        exec {
+            workingDir 'marked'
+            commandLine "make", "clean"
+        }
+        exec {
+            workingDir 'marked'
+            commandLine "git", "checkout", "marked.min.js"
+        }
+        println "*-*-* marked.js generated *-*-*"
     }
-    exec {
-        workingDir 'marked'
-        commandLine "cp", "marked.min.js", "../src/main/assets/js/marked.min.js"
-    }
-    exec {
-        workingDir 'marked'
-        commandLine "make", "clean"
-    }
-    exec {
-        workingDir 'marked'
-        commandLine "git", "checkout", "marked.min.js"
-    }
-    println "*-*-* marked.js generated *-*-*"
 }
 
-task makeIconFont(type: Exec) {
+task makeIconFont {
     outputs.file file("src/main/assets/fonts/google-material/MaterialIcons-Regular.woff2")
-    buildIconFont()
-}
-void buildIconFont() {
-    exec {
-        workingDir 'src/main/assets/fonts/google-material'
-        //commandLine "wget", "-q", "https://github.com/google/material-design-icons/raw/master/iconfont/MaterialIcons-Regular.woff2", "-O", "MaterialIcons-Regular.woff2"
-        commandLine "wget", "-q", "https://github.com/google/material-design-icons/raw/3.0.2/iconfont/MaterialIcons-Regular.woff2", "-O", "MaterialIcons-Regular.woff2"
+    doLast {
+        exec {
+            workingDir 'src/main/assets/fonts/google-material'
+            commandLine "wget", "-q", "https://github.com/google/material-design-icons/raw/3.0.2/iconfont/MaterialIcons-Regular.woff2", "-O", "MaterialIcons-Regular.woff2"
+        }
+        println "*-*-* icon font copied *-*-*"
     }
-    println "*-*-* icon font copied *-*-*"
 }
 
-task makeStrings() {
+task makeStrings {
     inputs.dir("templates")
-    outputs.files("src/main/assets/md/default/Help.md", "src/main/assets/md/default/Help_legacy.md", "src/main/res/valies/strings.xml", "src/main/res/valies-v21/strings.xml")
-    buildStringsFromTemplates()
-}
-void buildStringsFromTemplates() {
-    exec {
-        workingDir 'templates'
-        commandLine 'sh', '@apply_templates.sh'
+    outputs.files("src/main/assets/md/default/Help.md", "src/main/assets/md/default/Help_legacy.md", "src/main/res/values/strings.xml", "src/main/res/values-v21/strings.xml")
+    doLast {
+        exec {
+            workingDir 'templates'
+            commandLine 'sh', '@apply_templates.sh'
+        }
+        println "*-*-* strings generated *-*-*"
     }
-    println "*-*-* strings generated *-*-*"
 }
 
 build.dependsOn makeStrings
@@ -173,8 +168,17 @@ dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
 }
 
-static def getGitRevParseInfo (what) {
-    def cmd = "git " + what + " HEAD"
-    def info = cmd.execute ()
-    info.text.trim ()
+static def getGitRevParseInfo(what) {
+    try {
+        def cmd = "git " + what + " HEAD"
+        def proc = cmd.execute()
+        def stdout = new StringBuilder()
+        def stderr = new StringBuilder()
+        proc.consumeProcessOutput(stdout, stderr)
+        proc.waitFor()
+        def result = stdout.toString().trim()
+        return (proc.exitValue() == 0 && !result.isEmpty()) ? result : "0"
+    } catch (e) {
+        return "0"
+    }
 }

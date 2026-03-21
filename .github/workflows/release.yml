@@ -35,29 +35,56 @@ jobs:
         node-version: '18'
     
     - name: Install Mustache CLI
-      run: sudo npm install -g mustache
+      run: npm install -g mustache
     
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     
-    - name: Initialize submodules
+    - name: Initialize submodules (fallback)
       run: |
-        if [ -d "app/highlight.js" ]; then
-          echo "highlight.js submodule exists"
-        else
+        if [ ! -e "app/highlight.js/.git" ]; then
           echo "Cloning highlight.js..."
-          cd app
-          git clone https://github.com/highlightjs/highlight.js.git
-          cd ..
-        fi
-        if [ -d "app/marked" ]; then
-          echo "marked submodule exists"
+          git clone https://github.com/highlightjs/highlight.js.git app/highlight.js
         else
-          echo "Cloning marked..."
-          cd app
-          git clone https://github.com/markedjs/marked.git
-          cd ..
+          echo "highlight.js submodule exists"
         fi
+        if [ ! -e "app/marked/.git" ]; then
+          echo "Cloning marked..."
+          git clone https://github.com/markedjs/marked.git app/marked
+        else
+          echo "marked submodule exists"
+        fi
+    
+    - name: Build JS assets
+      run: |
+        cd app
+        # Build highlight.js
+        if [ ! -f "src/main/assets/js/highlight.pack.js" ]; then
+          cd highlight.js
+          npm install
+          node tools/build.js :common
+          cp build/highlight.pack.js ../src/main/assets/js/highlight.pack.js
+          cp src/styles/github.css ../src/main/assets/css/highlight.css
+          cd ..
+          echo "highlight.js built"
+        else
+          echo "highlight.pack.js already exists, skipping"
+        fi
+        # Build marked.js
+        if [ ! -f "src/main/assets/js/marked.min.js" ]; then
+          cd marked
+          npm run build 2>/dev/null || make 2>/dev/null || true
+          if [ -f "marked.min.js" ]; then
+            cp marked.min.js ../src/main/assets/js/marked.min.js
+          elif [ -f "lib/marked.min.js" ]; then
+            cp lib/marked.min.js ../src/main/assets/js/marked.min.js
+          fi
+          cd ..
+          echo "marked.js built"
+        else
+          echo "marked.min.js already exists, skipping"
+        fi
+      continue-on-error: true
     
     - name: Create keystore files for signing
       run: |
@@ -69,20 +96,19 @@ jobs:
           -dname "CN=Android Debug,O=Android,C=US"
         
         # Create gradle.properties with debug signing config
-        cat > gradle.properties << EOF
-        MY_DEBUG_KEYSTORE_FILE=$HOME/.android/debug.keystore
-        MY_DEBUG_KEYSTORE_PASSWORD=android
-        MY_DEBUG_KEY_ALIAS=androiddebugkey
-        MY_DEBUG_KEY_PASSWORD=android
-        MY_RELEASE_KEYSTORE_FILE=$HOME/.android/debug.keystore
-        MY_RELEASE_KEYSTORE_PASSWORD=android
-        MY_RELEASE_KEY_ALIAS=androiddebugkey
-        MY_RELEASE_KEY_PASSWORD=android
-        EOF
+        {
+          echo "MY_DEBUG_KEYSTORE_FILE=$HOME/.android/debug.keystore"
+          echo "MY_DEBUG_KEYSTORE_PASSWORD=android"
+          echo "MY_DEBUG_KEY_ALIAS=androiddebugkey"
+          echo "MY_DEBUG_KEY_PASSWORD=android"
+          echo "MY_RELEASE_KEYSTORE_FILE=$HOME/.android/debug.keystore"
+          echo "MY_RELEASE_KEYSTORE_PASSWORD=android"
+          echo "MY_RELEASE_KEY_ALIAS=androiddebugkey"
+          echo "MY_RELEASE_KEY_PASSWORD=android"
+        } > gradle.properties
     
     - name: Build Release APKs
-      run: |
-        ./gradlew assembleDebug assembleBeta assembleGeneral --stacktrace
+      run: ./gradlew assembleDebug assembleBeta assembleGeneral --stacktrace
     
     - name: Get version information
       id: version
@@ -105,7 +131,7 @@ jobs:
         
         # Find and copy all APK variants
         find app/build/outputs/apk -name "*.apk" -type f | while read apk; do
-          variant=$(echo $apk | grep -oP '(debug|beta|general)' | head -1)
+          variant=$(echo "$apk" | grep -oP '(debug|beta|general)' | head -1)
           cp "$apk" "release-artifacts/OpenMarkdownNotes-${VERSION_NAME}-${variant}-${COMMIT_SHA}.apk"
           echo "Copied: OpenMarkdownNotes-${VERSION_NAME}-${variant}-${COMMIT_SHA}.apk"
         done
@@ -114,61 +140,62 @@ jobs:
     
     - name: Create Release Notes
       id: release_notes
+      env:
+        VERSION_NAME: ${{ steps.version.outputs.version_name }}
+        COMMIT_SHA: ${{ steps.version.outputs.commit_sha }}
       run: |
-        cat > release-notes.md << 'EOF'
-        ## Open Markdown Notes - Version ${{ steps.version.outputs.version_name }}
-        
-        ### 📦 Installation Files
-        
-        This release includes multiple APK variants for testing:
-        
-        - **Debug APK**: For development and testing (includes debug symbols)
-        - **Beta APK**: Beta testing version with debug signing
-        - **General APK**: General release candidate
-        
-        ### 🚀 What's Included
-        
-        - Multi-document markdown management
-        - AI-powered context analysis
-        - Graph visualization for note connections
-        - Full Portuguese translation
-        - Android 15/16 support (API 35)
-        
-        ### 📱 Installation Instructions
-        
-        1. Download the appropriate APK file for your needs
-        2. Enable "Install from unknown sources" on your Android device
-        3. Open the downloaded APK file to install
-        4. Grant necessary permissions when prompted
-        
-        ### ⚠️ Note
-        
-        These are test builds signed with debug keys. For production use, download from:
-        - [Google Play Store](https://play.google.com/store/apps/details?id=net.basov.omn.b)
-        - [F-Droid](https://f-droid.org/en/packages/net.basov.omn.fdroid/)
-        
-        ### 📝 Changelog
-        
-        - Enhanced multi-document management capabilities
-        - Automated build and deployment system
-        - Improved CI/CD pipeline
-        - Version tracking in APK filenames
-        
-        **Build SHA**: ${{ steps.version.outputs.commit_sha }}
-        EOF
-        
+        {
+          echo "## Open Markdown Notes - Version ${VERSION_NAME}"
+          echo ""
+          echo "### 📦 Installation Files"
+          echo ""
+          echo "This release includes multiple APK variants for testing:"
+          echo ""
+          echo "- **Debug APK**: For development and testing (includes debug symbols)"
+          echo "- **Beta APK**: Beta testing version with debug signing"
+          echo "- **General APK**: General release candidate"
+          echo ""
+          echo "### 🚀 What's Included"
+          echo ""
+          echo "- Multi-document markdown management"
+          echo "- AI-powered context analysis"
+          echo "- Graph visualization for note connections"
+          echo "- Full Portuguese translation"
+          echo "- Android 15/16 support (API 35)"
+          echo ""
+          echo "### 📱 Installation Instructions"
+          echo ""
+          echo "1. Download the appropriate APK file for your needs"
+          echo "2. Enable \"Install from unknown sources\" on your Android device"
+          echo "3. Open the downloaded APK file to install"
+          echo "4. Grant necessary permissions when prompted"
+          echo ""
+          echo "### ⚠️ Note"
+          echo ""
+          echo "These are test builds signed with debug keys. For production use, download from:"
+          echo "- [Google Play Store](https://play.google.com/store/apps/details?id=net.basov.omn.b)"
+          echo "- [F-Droid](https://f-droid.org/en/packages/net.basov.omn.fdroid/)"
+          echo ""
+          echo "### 📝 Changelog"
+          echo ""
+          echo "- Enhanced multi-document management capabilities"
+          echo "- Automated build and deployment system"
+          echo "- Improved CI/CD pipeline"
+          echo "- Version tracking in APK filenames"
+          echo ""
+          echo "**Build SHA**: ${COMMIT_SHA}"
+        } > release-notes.md
         cat release-notes.md
     
     - name: Create GitHub Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
-        tag_name: ${{ github.ref_name || format('v{0}', steps.version.outputs.version_name) }}
+        tag_name: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', steps.version.outputs.version_name) || github.ref_name }}
         name: Release ${{ steps.version.outputs.version_name }}
         body_path: release-notes.md
         draft: false
         prerelease: true
-        files: |
-          release-artifacts/*.apk
+        files: release-artifacts/*.apk
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     
